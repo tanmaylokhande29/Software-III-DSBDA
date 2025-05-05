@@ -1,0 +1,829 @@
+https://ctxt.io/2/AAB4SSEHFA
+Practical 1:
+
+# Data Wrangling, I
+# Perform the following operations using Python on dataset(e.g. employee.csv)
+# 1.Import all the required Python Libraries. And Load the Dataset into pandas data frame.
+# 2. Data Preprocessing: find the missing values in the data columnwise and display statistical information.
+# 3. Provide variable descriptions. Types of variables etc.Check the dimensions of the data frame
+# 4. Data Formatting Summarize the types of variables by checking the data types (i.e., character, numeric, integer, factor, and logical) of the variables in the data set. If variables are not in the correct data type, apply proper type conversions.
+# 5. Data Normalization:Perform Z-Score transformation and plot box plot for any column
+# 6.Turn categorical variables into quantitative variables in Python.
+
+# Step 1: Import required libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+
+# Step 2: Load the dataset
+df = pd.read_csv('./PR_EXAM_DATASET/Employee.csv')  # Make sure employee.csv is in the same directory
+df.head()
+
+
+# Step 3: Data Preprocessing
+# Find missing values
+print("Missing values per column:\n", df.isnull().sum())  #df.isnull().sum()
+
+# Display statistical information
+print("\nStatistical Summary:\n")
+print(df.describe())  #df.describe(include='all')
+
+
+# Step 4: Variable Descriptions and Dimensions
+print("\nDataset Dimensions:", df.shape)
+print("\nColumn-wise Data Types:\n", df.dtypes)
+
+
+
+# Step 5: Data Formatting - Check and Convert Data Types
+categorical_cols = ['Education', 'City', 'Gender', 'EverBenched']
+for col in categorical_cols:
+    df[col] = df[col].astype('category')
+
+print("\nData types after formatting:\n", df.dtypes)
+
+
+
+
+# Step 6: Data Normalization - Z-Score on 'Age'
+scaler = StandardScaler()
+df['Age_zscore'] = scaler.fit_transform(df[['Age']])
+
+
+# Step 7: Convert categorical variables to numerical values
+print(df)
+# Map 'EverBenched' Yes/No to 1/0
+df['EverBenched'] = df['EverBenched'].map({'Yes': 1, 'No': 0})
+
+# One-hot encode remaining categorical variables
+categorical_cols = ['Education', 'City', 'Gender']
+df_encoded = pd.get_dummies(df, columns=categorical_cols, drop_first=False)
+
+# Convert all boolean columns (if any) to integers (0 and 1)
+bool_cols = df_encoded.select_dtypes(include='bool').columns
+df_encoded[bool_cols] = df_encoded[bool_cols].astype(int)
+
+df_encoded.head()
+
+
+
+Practical 2:
+# Data Wrangling, I
+# Perform the following operations using Python on dataset(e.g., student.csv)
+# 1.Import all the required Python Libraries. And Load the Dataset into pandas data frame.
+# 2. Data Preprocessing: find the missing values in the data and display statistical information.
+# 3. Provide variable descriptions. Types of variables etc. Check the dimensions of the data frame
+# 4. Data Normalization: Perform min max normalization and plot box plot for any column
+# 5.Turn categorical variables for PG column into quantitative variables in Python.
+
+# Step 1: Import libraries and load the dataset
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load dataset
+df = pd.read_csv("./PR_EXAM_DATASET/AcademicPerformance_New.csv")
+df.head()
+
+# Step 2: Data Preprocessing
+# Display missing values
+print("Missing Values:\n", df.isnull().sum())
+
+# Display statistical info
+print("\nStatistical Summary:\n", df.describe(include='all'))
+
+
+# Step 3: Variable Descriptions and Data Types
+print("\nData Types:\n", df.dtypes)
+print("\nShape of DataFrame:", df.shape)
+
+
+# Step 4: Data Normalization using Min-Max Scaling
+from sklearn.preprocessing import MinMaxScaler
+
+# Selecting numerical columns for normalization
+numeric_cols = ['WT', 'DSBDA', 'AI', 'Average']
+scaler = MinMaxScaler()
+df_normalized = df.copy()
+df_normalized[numeric_cols] = scaler.fit_transform(df[numeric_cols])
+
+# Plotting boxplot for one normalized column (e.g., Average)
+plt.figure(figsize=(8,5))
+sns.boxplot(data=df_normalized, y='Average')
+plt.title("Boxplot of Normalized Average")
+plt.show()
+
+# Step 5: Convert 'PG' to Quantitative (0 for No, 1 for Yes)
+df['PG'] = df['PG'].map({'Yes': 1, 'No': 0})
+df.head()
+
+
+
+Practical 3:
+# Data Wrangling II operations using Python. (e.g.Academic_Performance.csv)
+# 1. Scan all variables for missing values and inconsistencies. If there are missing values and/or inconsistencies, use any of the suitable techniques to deal with them(using mean and mode).Apply for single column and whole dataset.
+# 2. Scan all numeric variables for outliers. If there are outliers,any of the suitable techniques to deal with them.(using z score)
+# 3. Display and Remove the outliers
+# 4. Apply data transformations on at least one of the variables Create bins and Labels.
+# 5. Draw box plot
+
+
+import pandas as pd
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load your dataset from CSV
+df = pd.read_csv("./PR_EXAM_DATASET/AcademicPerformance_New.csv")
+
+# Preview data
+print(df.head())
+
+print(df.dtypes)  
+
+
+# Drop rows that are fully empty
+df.dropna(how='all', inplace=True)
+
+# Fill missing values
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col].fillna(df[col].mode()[0], inplace=True)
+    else:
+        df[col].fillna(df[col].mean(), inplace=True)
+
+# Check for any remaining nulls
+df.isnull().sum()
+
+
+# Detect outliers using Z-score
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+z_scores = np.abs(stats.zscore(df[numeric_cols]))
+outliers = (z_scores > 3)
+
+# Display outlier rows
+outlier_rows = df[(outliers).any(axis=1)]
+print("Outliers Detected:")
+outlier_rows
+
+# Remove outliers
+
+print("Shape before removing outliers:", df.shape)
+df_no_outliers = df[~(outliers).any(axis=1)]
+print("Shape after removing outliers:", df_no_outliers.shape)
+
+
+# Create performance bins
+bins = [0, 50, 65, 75, 90, 100]
+labels = ['F', 'D', 'C', 'B', 'A']
+
+# Create new column with bins
+df_no_outliers['Performance'] = pd.cut(df_no_outliers['Average'], bins=bins, labels=labels)
+
+# Show value counts for new column
+df_no_outliers['Performance'].value_counts()
+
+
+plt.figure(figsize=(8, 5))
+sns.boxplot(y=df_no_outliers['Average'])
+plt.title('Box Plot of Average')
+plt.grid()
+plt.show()
+
+
+
+
+Practical 4:
+# Data Wrangling II operations using Python..(e.g.,
+# Academic_Performance.csv)
+# 1. Scan all variables for missing values and inconsistencies. If there are missing values and/or inconsistencies, use any of the suitable techniques to deal with them(using median and 0).Apply for single column and whole dataset.
+# 2. Scan all numeric variables for outliers. If there are outliers,any of the suitable techniques to deal with them.(using IQR)
+# 3.Display and Remove the outliers show q1 and q3
+# 4. Apply aggregation function (max,avg). The purpose of this transformation should be one of the following reasons: to change the scale for better understanding of the variable, to convert a non-linear relation into a linear one, or to decrease the skewness and convert the distribution into a normal distribution. Reason and document your approach properly.
+# 5. Draw Scatter plot
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+df = pd.read_csv('./PR_EXAM_DATASET/AcademicPerformance_New.csv')
+
+# Preview the data
+df.head()
+
+# Drop rows that are completely empty
+df.dropna(how='all', inplace=True)
+
+# Handle missing values
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col].fillna("0", inplace=True)
+    else:
+        df[col].fillna(df[col].median(), inplace=True)
+
+# Check if any missing values remain
+df.isnull().sum()
+
+
+
+numeric_cols = df.select_dtypes(include=[np.number]).columns
+print("Numeric Columns:")
+numeric_cols=numeric_cols.delete(0)
+print(numeric_cols.delete(0))
+# Create dictionary to store IQR bounds
+iqr_bounds = {}
+
+# Loop through each numeric column
+for col in numeric_cols:
+    Q1 = df[col].quantile(0.25)
+    Q3 = df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    iqr_bounds[col] = (Q1, Q3, lower_bound, upper_bound)
+
+# Display outliers
+outlier_mask = pd.DataFrame(False, index=df.index, columns=numeric_cols)
+
+for col in numeric_cols:
+    Q1, Q3, lower, upper = iqr_bounds[col]
+    outlier_mask[col] = (df[col] < lower) | (df[col] > upper)
+
+outliers = df[outlier_mask.any(axis=1)]
+print("Outliers Detected:")
+outliers
+
+
+
+# Remove rows with any outlier
+df_no_outliers = df[~outlier_mask.any(axis=1)]
+
+# Show bounds used
+for col in numeric_cols:
+    Q1, Q3, lower, upper = iqr_bounds[col]
+    print(f"{col} - Q1: {Q1}, Q3: {Q3}, Lower Bound: {lower}, Upper Bound: {upper}")
+
+print("Shape after removing outliers:", df_no_outliers.shape)
+
+
+# Reason: Reducing skewness and normalizing data distribution
+# We apply average scaling and max normalization
+
+# Copy dataframe
+df_transformed = df_no_outliers.copy()
+
+# Create new scaled columns
+for col in numeric_cols:
+    df_transformed[f"{col}_avg_scaled"] = df_transformed[col] / df_transformed[col].mean()
+    df_transformed[f"{col}_max_scaled"] = df_transformed[col] / df_transformed[col].max()
+
+# Show transformed columns
+df_transformed
+
+
+
+plt.figure(figsize=(8,6))
+sns.scatterplot(data=df_transformed, x='WT', y='Average')
+plt.title('Scatter Plot: WT vs Average')
+plt.xlabel('WT')
+plt.ylabel('Average')
+plt.grid()
+plt.show()
+
+
+
+Practical 5:
+# Descriptive Statistics –
+# Measures of Central Tendency and variability Perform the following
+# operations on any open source dataset (e.g., employee_2.csv/data.csv)
+# 1.Provide summary statistics (mean, median, minimum) for a dataset (age,salary etc.) with numeric variables
+# 2.Grouped by one of the qualitative (categorical) variable. For example, if your categorical variable is age groups and quantitative variable is income,then provide summary statistics of income grouped by the age groups.Create a list that contains a numeric value for each response to the categorical variable. 
+# 3. Perform grouping on and display JOB_ID and it&#39;s count
+# 4.Show data visualization for any column
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+
+df = pd.read_csv('./PR_EXAM_DATASET/Employee_2.csv')
+
+# Display the first few rows
+print("Preview of data:")
+df.head()
+
+print("\n--- Summary Statistics ---")
+print("Mean:\n", df[['Age', 'Salary']].mean(numeric_only=True))
+print("\nMedian:\n", df[['Age', 'Salary']].median(numeric_only=True))
+print("\nMinimum:\n", df[['Age', 'Salary']].min(numeric_only=True))
+
+
+print("\n--- Grouped Summary Statistics (Salary by Education) ---")
+grouped = df.groupby('Education')['Salary'].agg(['mean', 'median', 'min'])
+grouped
+
+
+print("\n--- Count of each Education category (used as JOB_ID proxy) ---")
+df['Education'].value_counts()
+
+plt.figure(figsize=(14, 6))
+
+# Boxplot
+plt.subplot(1, 2, 2)
+sns.boxplot(x='Education', y='Salary', data=df)
+plt.title('Salary Distribution by Education')
+plt.xticks(rotation=45)
+
+plt.tight_layout()
+plt.show()
+
+
+
+Practical 6:
+# Descriptive Statistics –
+# Measures of Central Tendency and variability Perform the following operations on any open source dataset (e.g., employee_2.csv/data.csv)
+# 1.Provide summary statistics (maximum, standard deviation, covaiance) for a dataset (age, salary etc.) with numeric variables
+# 2. Grouped by one of the qualitative (categorical) variable. For example, if your categorical variable is age groups and quantitative variable is income, then provide summary statistics of income grouped by the age groups. Create a list that contains a numeric value for each response to the categorical variable. 
+# 3. Perform grouping on and display JOB_ID and its count
+# 4.Show data visualization for any column
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Replace 'your_dataset.csv' with your actual filename
+df = pd.read_csv('./PR_EXAM_DATASET/Employee_2.csv')
+
+# Display the first few rows
+print("Preview of data:")
+df.head()
+
+
+print("\n--- Maximum Values ---")
+print(df[['Age', 'Salary']].max(numeric_only=True))
+
+print("\n--- Standard Deviation ---")
+print(df[['Age', 'Salary']].std(numeric_only=True))
+
+print("\n--- Covariance Matrix ---")
+print(df[['Age', 'Salary']].cov())
+
+
+
+print("\n--- Grouped Max Salary by Education ---")
+max_salary_grouped = df.groupby('Education')['Salary'].max()
+print(max_salary_grouped)
+
+# Convert to numeric list
+max_salary_list = max_salary_grouped.dropna().tolist()
+print("\nNumeric list of max salaries per Education group:")
+print(max_salary_list)
+
+
+
+print("\n--- Count per Education category (JOB_ID proxy) ---")
+education_counts = df['Education'].value_counts()
+print(education_counts)
+
+
+
+plt.figure(figsize=(8, 5))
+sns.countplot(x='PaymentTier', data=df)
+plt.title("Count of Employees by Payment Tier")
+plt.xlabel("Payment Tier")
+plt.ylabel("Count")
+plt.show()
+
+
+Practical 7:
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+
+
+
+# Load your dataset (update filename as needed)
+df = pd.read_csv('./PR_EXAM_DATASET/HousingData.csv')
+
+# Show first few rows
+df.head()
+
+
+
+# Convert to numeric and handle missing values
+df = df.apply(pd.to_numeric, errors='coerce')
+df = df.dropna()
+
+# Separate features and target
+X = df.drop('MEDV', axis=1)
+y = df['MEDV']
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)
+
+
+
+plt.figure(figsize=(6, 6))
+plt.scatter(y_test, y_pred, edgecolors='k', alpha=0.7)
+plt.plot([y.min(), y.max()], [y.min(), y.max()], 'r--', lw=2)
+plt.xlabel("Actual MEDV")
+plt.ylabel("Predicted MEDV")
+plt.title("Actual vs Predicted House Prices")
+plt.grid(True)
+plt.show()
+
+
+
+Practical 8:
+# Data Analytics I:
+# https://www.youtube.com/watch?v=QcPycBZomac
+# Show linear regression technique for user values.
+# Create a Linear Regression Model using Python/R to predict salary of 15 years of experience using salary_csv file.
+# Experience Salary
+# 5 20000
+# 7 25000
+# 9 40000
+# 12 60000
+# 18 80000
+# 20 110000
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+
+
+
+# Replace 'salary.csv' with your actual file path if needed
+data = pd.read_csv('./PR_EXAM_DATASET/Salary_Data.csv')
+print(data.head())
+
+
+
+X = data[['YearsExperience']]X = data[['YearsExperience']]
+y = data['Salary']
+
+
+model = LinearRegression()
+model.fit(X, y)
+
+
+
+predicted_salary = model.predict([[15]])
+print(f"Predicted salary for 15 years of experience: ${predicted_salary[0]:,.2f}")
+
+plt.scatter(X,y,color='red')
+plt.plot(X,model.predict(X),color='blue')
+plt.scatter(15,salary_pred[0],color='green')
+
+
+
+
+Practical 9:
+# Data Analytics II
+# 1. Implement logistic regression using Python/R to perform classification on Social_Network_Ads.csv dataset.
+# 2. Compute Confusion matrix to find TP, FP, TN, FN, Accuracy, Error rate,Precision, Recall on the given dataset.
+
+
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+
+
+
+# Load dataset from CSV (replace with your filename if needed)
+data = pd.read_csv('./PR_EXAM_DATASET/Social_Network_Ads.csv ')
+print(data.head())
+
+
+# Drop User ID and encode Gender
+data = data.drop('User ID', axis=1)
+data['Gender'] = data['Gender'].map({'Male': 0, 'Female': 1})
+
+# Features and Target
+X = data[['Gender', 'Age', 'EstimatedSalary']]
+y = data['Purchased']
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
+
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+
+
+y_pred = model.predict(X_test)
+
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+tn, fp, fn, tp = cm.ravel()
+
+# Metrics
+accuracy = accuracy_score(y_test, y_pred)
+error_rate = 1 - accuracy
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+
+# Output results
+print("Confusion Matrix:")
+print(cm)
+print(f"True Positives (TP): {tp}")
+print(f"False Positives (FP): {fp}")
+print(f"True Negatives (TN): {tn}")
+print(f"False Negatives (FN): {fn}")
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Error Rate: {error_rate:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+
+
+
+Practical 10:
+
+# Data Analytics II
+# https://www.youtube.com/watch?v=UCOm-LFKX9E
+# 1. Implement logistic regression using Python/R to perform classification on Social_Network_Ads.csv dataset.
+# STUDY HOURS PASS/FAIL
+# 29 0
+# 15 0
+# 33 1
+# 48 1
+# 39 1
+
+# 2.Find the logistic regression for student if they study 25 and 42 hours
+# 3. Compute Confusion matrix to find TP, FP, TN, FN, Accuracy, Error rate,Precision, Recall on the given dataset.
+
+
+
+
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+
+
+# Step 1: Create the dataset
+data = {
+    'STUDY_HOURS': [29, 15, 33, 48, 39],
+    'PASS_FAIL': [0, 0, 1, 1, 1]
+}
+df = pd.DataFrame(data)
+
+
+# Step 2: Define features (X) and target (y)
+X = df[['STUDY_HOURS']]
+y = df['PASS_FAIL']
+
+
+model = LogisticRegression()
+model.fit(X, y)
+
+
+new_data = pd.DataFrame({'STUDY_HOURS': [25, 42]})
+predictions = model.predict(new_data)
+
+
+print("\nPredictions for new study hours (25, 42):")
+for i, hour in enumerate(new_data['STUDY_HOURS']):
+    print(f"Study Hours: {hour}, Predicted: {'Pass' if predictions[i]==1 else 'Fail'}")
+
+
+y_pred = model.predict(X)
+
+
+cm = confusion_matrix(y, y_pred)
+tn, fp, fn, tp = cm.ravel()
+
+
+
+# Metrics
+accuracy = accuracy_score(y, y_pred)
+error_rate = 1 - accuracy
+precision = precision_score(y, y_pred)
+recall = recall_score(y, y_pred)
+
+print("\nConfusion Matrix:")
+print(cm)
+print(f"\nTrue Positives (TP): {tp}")
+print(f"False Positives (FP): {fp}")
+print(f"True Negatives (TN): {tn}")
+print(f"False Negatives (FN): {fn}")
+print(f"\nAccuracy: {accuracy:.2f}")
+print(f"Error Rate: {error_rate:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+
+
+Practical 11:
+# Data Analytics III
+# For naïve bayes https://www.youtube.com/watch?v=XzSlEA4ck2I
+# For confusion matrix :https://www.youtube.com/watch?v=_CGTbkHwUHQ
+# 1.Implement Simple Naïve Bayes classification algorithm using Python/R on iris.csv dataset.
+# 2.Compute Confusion matrix to find TP, FP, TN, FN, Accuracy, Error rate, Precision, Recall on the given dataset.
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+
+df= pd.read_csv('./PR_EXAM_DATASET/IRIS.csv')
+df.head()
+
+# Features (X) and Target (y)
+X = df.drop('species', axis=1)
+y = df['species']
+
+
+# Split dataset into 70% training and 30% testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+
+# Create and train the Gaussian Naive Bayes model
+model = GaussianNB()
+model.fit(X_train, y_train)
+
+
+# Predict on the test dataset
+y_pred = model.predict(X_test)
+
+
+
+# Create and display the confusion matrix
+cm = confusion_matrix(y_test, y_pred, labels=model.classes_)
+cm_df = pd.DataFrame(cm, index=model.classes_, columns=model.classes_)
+
+print("Confusion Matrix:")
+print(cm_df)
+
+
+# Compute evaluation metrics
+accuracy = accuracy_score(y_test, y_pred)
+error_rate = 1 - accuracy
+precision = precision_score(y_test, y_pred, average='macro')  # average across all classes
+recall = recall_score(y_test, y_pred, average='macro')
+
+# Display metrics
+print(f"Accuracy: {accuracy:.2f}")
+print(f"Error Rate: {error_rate:.2f}")
+print(f"Precision: {precision:.2f}")
+print(f"Recall: {recall:.2f}")
+
+
+
+Practical 13:
+
+# Data Visualization I
+# 1. Use the inbuilt dataset &#39;titanic&#39;. The dataset contains 891 rows and contains information about the passengers who boarded the unfortunate Titanic ship. Use the Seaborn library to see if we can find any patterns in the data.
+# 2.Write a code to check how the price of the ticket (column name: fare&#39;) for each passenger is distributed by plotting a histogram.
+
+
+import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+titanic = sns.load_dataset('titanic')
+
+titanic.head()
+
+
+
+# Check basic info and missing values
+print(titanic.info())
+print("\nMissing values:\n", titanic.isnull().sum())
+
+
+# Plot survival by sex
+sns.countplot(data=titanic, x='sex', hue='survived')
+plt.title('Survival by Sex')
+plt.xlabel('Sex')
+plt.ylabel('Count')
+plt.legend(title='Survived')
+plt.show()
+
+
+
+# Plot class vs survival
+sns.countplot(data=titanic, x='class', hue='survived')
+plt.title('Survival by Class')
+plt.xlabel('Class')
+plt.ylabel('Count')
+plt.legend(title='Survived')
+plt.show()
+
+
+
+# Plot histogram of ticket prices
+sns.histplot(titanic['fare'], bins=30, kde=True)
+plt.title('Distribution of Ticket Fare')
+plt.xlabel('Fare')
+plt.ylabel('Number of Passengers')
+plt.show()
+
+
+Practical 14
+
+# Data Visualization II
+# 1. Use the inbuilt dataset &#39;titanic&#39; as used in the above problem. Plot a boxplot for distribution of age with respect to each gender along with the information about whether they survived or not. (Column names : &#39;sex&#39; and &#39;age&#39;)
+# 2.Write observations on the inference from the above statistics.
+
+import seaborn as sns
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load Titanic dataset
+titanic = sns.load_dataset('titanic')
+titanic.head()
+
+
+# Create a boxplot of Age grouped by Sex and Survival
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='sex', y='age', hue='survived', data=titanic)
+
+plt.title('Age Distribution by Gender and Survival')
+plt.xlabel('Sex')
+plt.ylabel('Age')
+plt.legend(title='Survived', labels=['No', 'Yes'])
+plt.show()
+
+
+Practical 15:
+
+# Use the Iris flower dataset or any other dataset into a DataFrame. Scan the dataset and give the inference as:
+# 1. List down the features and their types (e.g., numeric, nominal) available in the dataset.
+# 2.Create a histogram for each feature in the dataset to illustrate the feature distributions.
+# 3.Create a box plot for each feature in the dataset.
+# 4.Compare distributions and identify outliers
+
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load Iris dataset
+df = sns.load_dataset("iris")
+df.head()
+
+
+# List feature names and data types
+print("Features and Types:\n")
+print(df.dtypes)
+
+
+# Plot histograms for each numeric feature
+df.hist(figsize=(10, 8), bins=20, edgecolor='black')
+plt.suptitle("Histograms of Iris Dataset Features", fontsize=16)
+plt.tight_layout()
+plt.show()
+
+
+# Plot box plots for each numeric feature
+plt.figure(figsize=(12, 8))
+for i, col in enumerate(df.select_dtypes(include='number').columns):
+    plt.subplot(2, 2, i+1)
+    sns.boxplot(y=col, data=df)
+    plt.title(f"Box Plot of {col}")
+plt.tight_layout()
+plt.show()
+
+
+
+# Identify outliers using IQR method
+print("Outlier Detection:\n")
+numeric_cols = df.select_dtypes(include='number').columns
+
+for col in numeric_cols:
+    Q1 = df[col].quantile(0.25)
+    Q3 = df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
+    print(f"{col}: {len(outliers)} outlier(s)"
+
